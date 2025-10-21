@@ -83,10 +83,24 @@ class Ho_payment_module extends Module{
       $this->postProcess();
     }
 
+    // Asignaciones a smrty
     $this->context->smarty->assign('module_dir', $this->_path);
 
+    // Cargar datos almacenados para mostrarlos en el formulario
+    $metodosJSON = Configuration::get('HO_PAYMENT_MODULE_PAYMENTS');
+    $metodos = $metodosJSON ? json_decode($metodosJSON, true) : [];
+
+    // Asignar variables a Smarty antes de renderizar
+    $this->context->smarty->assign([
+      'module_dir' => $this->_path,
+      'metodos' => $metodos,
+      'module' => $this,
+    ]);
+
+    // Rendecizar plantilla (TPL)
     $output = $this->context->smarty->fetch($this->local_path.'views/templates/admin/configure.tpl');
 
+    // Renderizar formulario + TPL
     return $this->renderForm().$output;
   }
 

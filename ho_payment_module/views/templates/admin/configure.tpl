@@ -24,25 +24,33 @@
 *}
 
 <div class="panel">
-	<h3><i class="icon icon-credit-card"></i> {l s='hoPaimentModule' mod='ho_payment_module'}</h3>
-	<p>
-		<strong>{l s='Here is my new generic module!' mod='ho_payment_module'}</strong><br />
-		{l s='Thanks to PrestaShop, now I have a great module.' mod='ho_payment_module'}<br />
-		{l s='I can configure it using the following configuration form.' mod='ho_payment_module'}
-	</p>
-	<br />
-	<p>
-		{l s='This module will boost your sales!' mod='ho_payment_module'}
-	</p>
+  <h3>{$module->l('Métodos de pago configurados')}</h3>
+
+  {if $metodos|@count > 0}
+    <table class="table" style="width:100%; margin-top:10px;">
+      <thead>
+        <tr>
+          <th>{$module->l('ID')}</th>
+          <th>{$module->l('Nombre')}</th>
+          <th>{$module->l('Logo')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {foreach from=$metodos item=metodo}
+          <tr>
+            <td>{$metodo.id}</td>
+            <td>{$metodo.nombre}</td>
+            <td>
+              {if $metodo.logo}
+                <img src="{$module_dir}views/img/{$metodo.logo}" alt="{$metodo.nombre}" height="50">
+              {/if}
+            </td>
+          </tr>
+        {/foreach}
+      </tbody>
+    </table>
+  {else}
+    <p>{$module->l('No hay métodos de pago configurados aún.')}</p>
+  {/if}
 </div>
 
-<div class="panel">
-	<h3><i class="icon icon-tags"></i> {l s='Documentation' mod='ho_payment_module'}</h3>
-	<p>
-		&raquo; {l s='You can get a PDF documentation to configure this module' mod='ho_payment_module'} :
-		<ul>
-			<li><a href="#" target="_blank">{l s='English' mod='ho_payment_module'}</a></li>
-			<li><a href="#" target="_blank">{l s='French' mod='ho_payment_module'}</a></li>
-		</ul>
-	</p>
-</div>
