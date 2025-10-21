@@ -28,12 +28,10 @@ if (!defined('_PS_VERSION_')) {
   exit;
 }
 
-class Ho_payment_module extends Module
-{
+class Ho_payment_module extends Module{
   protected $config_form = false;
 
-  public function __construct()
-  {
+  public function __construct(){
     $this->name = 'ho_payment_module';
     $this->tab = 'administration';
     $this->version = '1.0.0';
@@ -89,7 +87,7 @@ class Ho_payment_module extends Module
 
     $output = $this->context->smarty->fetch($this->local_path.'views/templates/admin/configure.tpl');
 
-    return $output.$this->renderForm();
+    return $this->renderForm().$output;
   }
 
   /**
@@ -161,8 +159,8 @@ class Ho_payment_module extends Module
    */
   protected function getConfigFormValues(){
     return array(
-    'HO_PAYMENT_MODULE_NAME' => Configuration::get('HO_PAYMENT_MODULE_NAME', ''),
-    'HO_PAYMENT_MODULE_LOGO' => Configuration::get('HO_PAYMENT_MODULE_LOGO', ''),
+    'HO_PAYMENT_MODULE_NAME' => '',
+    'HO_PAYMENT_MODULE_LOGO' => '',
   );
   }
 
@@ -170,7 +168,7 @@ class Ho_payment_module extends Module
    * Guarda los datos del formulario.
    */
   protected function postProcess(){
-    $errores = [];
+    $errors = [];
     $nombre = Tools::getValue('HO_PAYMENT_MODULE_NAME');
 
     // Validar nombre
@@ -179,22 +177,32 @@ class Ho_payment_module extends Module
     }
 
     // Procesar logo si se sube
-    $logoNombre = '';
+    $nombreLogo = '';
     if (isset($_FILES['HO_PAYMENT_MODULE_LOGO']) && !empty($_FILES['HO_PAYMENT_MODULE_LOGO']['tmp_name'])) {
       $logo = $_FILES['HO_PAYMENT_MODULE_LOGO'];
       $tipoImgValido = ['image/svg+xml', 'image/webp'];
 
+      // Validar tipo MIME
       if (!in_array($logo['type'], $tipoImgValido)) {
-        $errors[] = $this->l('Formato de imagen no permitido. Usa SVG o WEBP.');
+        $errors[] = $this->l('Formato de imagen no válido. Solo se permiten SVG o WEBP.');
       } else {
         $path = $this->local_path . 'views/img/';
         if (!file_exists($path)) {
           mkdir($path, 0755, true);
         }
 
-        $logoNombre = 'logo_' . time() . '.' . pathinfo($logo['name'], PATHINFO_EXTENSION);
-        if (!move_uploaded_file($logo['tmp_name'], $path . $logoNombre)) {
-          $errors[] = $this->l('No se pudo subir el archivo del logo.');          
+        // Recoger nombre del formulario y limpiar caracteres no permitidos
+        $nombreFormulario = preg_replace('/[^a-zA-Z0-9_-]/', '', Tools::getValue('HO_PAYMENT_MODULE_NAME'));
+
+        // Truncarlo si es demasiado largo (max. 20 caracteres)
+        $nombreFormulario = substr($nombreFormulario, 0, 20);
+
+        // Generar nombre único para el logo
+        $nombreLogo = $nombreFormulario . '_' . uniqid() . '.' . pathinfo($_FILES['HO_PAYMENT_MODULE_LOGO']['name'], PATHINFO_EXTENSION);
+
+        // Mover el archivo subido
+        if (!move_uploaded_file($logo['tmp_name'], $path . $nombreLogo)) {
+          $errors[] = $this->l('Error al subir el logo. Verifica los permisos del directorio.');
         }
       }
     }
@@ -203,22 +211,24 @@ class Ho_payment_module extends Module
     if (empty($errors)) {
       // Recuperar métodos existentes
       $metodosJSON = Configuration::get('HO_PAYMENT_MODULE_PAYMENTS');
-      $metodos = $metodosJSON ? json_decode($metodosJSON, true) : [];
+      $metodos = $metodosJSON ? json_decode($metodosJSON, true) : []; 
 
-      // Generar un nuevo ID
-      $nuveoId = count($metodos) ? max(array_column($metodos, 'id')) + 1 : 1;
+      // Generar nuevo ID incremental
+      $nuevoID = count($metodos) ? max(array_column($metodos, 'id')) + 1 : 1;
 
-      // Crear nuevo metodo de pago
+      // Crear nuevo método
       $nuevoMetodo = [
         'id' => $nuevoID,
         'nombre' => $nombre,
-        'logo' => $logoNombre
+        'logo' => $nombreLogo
       ];
 
       $metodos[] = $nuevoMetodo;
 
-      Configuration::updateValue('HO_PAYMENT_MODULE_NAME', $nombre);
-      return $this->displayConfirmation($this->l('Configuración guardada correctamente.'));
+      // Guardar todo el JSON actualizado
+      Configuration::updateValue('HO_PAYMENT_MODULE_PAYMENTS', json_encode($metodos));
+
+      return $this->displayConfirmation($this->l('Método de pago guardado correctamente.'));
     } else {
       return $this->displayError(implode('<br>', $errors));
     }
