@@ -24,15 +24,16 @@
 *}
 
 <div class="panel">
-  <h3>{$module->l('Métodos de pago configurados')}</h3>
+  <h3>{$module->l('Métodos de pago creados')}</h3>
 
   {if $metodos|@count > 0}
-    <table class="table" style="width:100%; margin-top:10px;">
+    <table class="table" style="width:50%; margin-top:10px; margin: auto;">
       <thead>
         <tr>
           <th>{$module->l('ID')}</th>
           <th>{$module->l('Nombre')}</th>
           <th>{$module->l('Logo')}</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
@@ -44,6 +45,17 @@
               {if $metodo.logo}
                 <img src="{$module_dir}views/img/{$metodo.logo}" alt="{$metodo.nombre}" height="50">
               {/if}
+            </td>
+            <td>
+              {* Editar módulos *}
+              <a href="{$link->getAdminLink('AdminModules')}&configure={$module->name}&edit={$metodo.id}" class="btn btn-default">
+                {$module->l('Editar')}
+              </a>
+              {* Eliminar módulos *}
+              <a href="{$link->getAdminLink('AdminModules')}&configure={$module->name}&delete={$metodo.id}" class="btn btn-danger"
+                  onclick="return confirm('¿Seguro que quieres eliminar este método de pago?')">
+                {$module->l('Eliminar')}
+              </a>
             </td>
           </tr>
         {/foreach}
